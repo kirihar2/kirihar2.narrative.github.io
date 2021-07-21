@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!-- saved from url=(0056)https://kirihar2.github.io/kirihar2.narrative.github.io/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>My page | Narrative Visualization</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  </head><body>
+     <style> rect {fill: lightblue; stroke: black; }</style>
+     <svg width="300" height="300" id="pageSvgCanvas">
+</svg>
+</body>
+<script>
+    async function init() {
+      var temp = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
+      console.log(temp);
+    }
+    init();
+</script>
+</html>
