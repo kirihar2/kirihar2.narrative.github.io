@@ -2,16 +2,64 @@
 <!-- saved from url=(0056)https://kirihar2.github.io/kirihar2.narrative.github.io/ -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>My page | Narrative Visualization</title>
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  </head><body>
+  </head><body id= 'dataVisualizationBody'>
      <style> rect {fill: lightblue; stroke: black; }</style>
-     <svg width="300" height="300" id="pageSvgCanvas">
+     
 </svg>
 </body>
 <script>
+
     async function init() {
-      var temp = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
-      console.log(temp);
+
+      var margin = {top: 10, right: 30, bottom: 30, left: 60},
+      width = 460 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+      // append the svg object to the body of the page
+      var svg = d3.select("#dataVisualizationBody")
+        .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+
+      var data = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
+      console.log(data);
+      const [dataValues] = d3.values(data)
+      const keys = Object.keys(dataValues)
+      console.log(keys);
+      const monthField = keys[0];
+      const homeValueField = keys[20];
+      const homeValuePercentChange = keys[21];
+      var x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d['Month'] }))
+        .range([ 0, width ]);
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+      // Add Y axis
+      var y = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .call(d3.axisLeft(y));
+
+       //Add the line
+      svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .x(function(d) { return x(d['Month']) })
+          .y(function(d) { return y(d['USA\n\n(SA) Monthly % change']) })
+          )
+    
     }
+
     init();
 </script>
 </html>
