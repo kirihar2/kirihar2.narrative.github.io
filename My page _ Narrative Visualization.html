@@ -69,7 +69,7 @@
         .text("% change of Housing Price from last month");
        //Add the line
       svg.append("path")
-        .datum(data)
+        .datum(data.filter(function(v) { return v['Month'] !== null }))
         .attr("fill", "none")
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1.5)
