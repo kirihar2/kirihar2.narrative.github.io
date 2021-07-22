@@ -2,7 +2,25 @@
 <!-- saved from url=(0056)https://kirihar2.github.io/kirihar2.narrative.github.io/ -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>My page | Narrative Visualization</title>
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  </head><body id= 'dataVisualizationBody'>
+  </head>
+  <style> /* set the CSS */
+
+    div.tooltip {	
+        position: absolute;			
+        text-align: center;			
+        width: 60px;					
+        height: 28px;					
+        padding: 2px;				
+        font: 12px sans-serif;		
+        background: lightsteelblue;	
+        border: 0px;		
+        border-radius: 8px;			
+        pointer-events: none;			
+    }
+    
+    </style>
+  
+  <body id= 'dataVisualizationBody'>
      <style> rect {fill: lightblue; stroke: black; }</style>
      
 </svg>
@@ -11,8 +29,8 @@
 
     async function init() {
 
-      var margin = {top: 10, right: 50, bottom: 50, left: 70},
-      width = 800 - margin.left - margin.right,
+      var margin = {top: 80, right: 50, bottom: 50, left: 80},
+      width = 1000 - margin.left - margin.right,
       height = 800 - margin.top - margin.bottom;
 
       // append the svg object to the body of the page
@@ -60,7 +78,7 @@
         .attr('text-anchor', 'middle')
         .attr('transform', 'rotate(-90)')
         .style('fill', housing_price_color)
-        .text("Housing Price ($)");
+        .text("US (SA) Housing Price Index");
 
       var MonthlyPercentageDifference = d3.scaleLinear()
         .domain([d3.min(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; }), d3.max(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; })])
@@ -75,7 +93,7 @@
         .attr('text-anchor', 'middle')
         .attr('transform', 'rotate(-90)')
         .style('fill', housing_price_percent_change_color)
-        .text("% change of Housing Price from last month");
+        .text("% change of Housing Price Index from last month");
        //Add the line
       svg.append("path")
         .datum(data.filter(function(v) { return v['Month'] !== null }))
@@ -95,6 +113,33 @@
           .x(function(d) { return x(date_format(d['Month'])) })
           .y(function(d) { return MonthlyUSHousePrice(d['USA\n\n(SA)']) })
           );
+
+
+          var div = d3.select("body").append("div")	
+            .attr("class", "tooltip")	
+            			
+            .style("opacity", 0);
+          svg.selectAll("dot")	
+          .data(data)			
+          .enter().append("circle")		
+            .style('fill',housing_price_color)						
+            .attr("r", 5)		
+            .attr("cx", function(d) { return x(date_format(d['Month'])); })		 
+            .attr("cy", function(d) { return MonthlyUSHousePrice(d['USA\n\n(SA)']); })		
+            .on("mouseover", function(d) {		
+                div.transition()		
+                    .duration(200)		
+                    .style("opacity", .9);		
+                div.html(d['Month'] + "<br/>"  + d['USA\n\n(SA)'])	
+                    .style("left", (d3.event.pageX-60) + "px")		
+                    .style("top", (d3.event.pageY - 28) + "px");	
+                })					
+            .on("mouseout", function(d) {		
+                div.transition()		
+                    .duration(500)		
+                    .style("opacity", 0)
+                    .on('end',() => div.html(''));	
+            });
     }
 
     init();
