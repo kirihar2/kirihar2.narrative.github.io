@@ -2,8 +2,84 @@
 <html>
   <title>{{ page.title }} | {{ site.title }}</title>
   <script src='https://d3js.org/d3.v5.min.js'></script>
-  <body>
+  <body id= 'dataVisualizationBody'>
      <style> rect {fill: lightblue; stroke: black; }</style>
-     <svg width=300 height=300 id = "pageSvgCanvas">
-  </body>
+     
+</svg>
+</body>
+<script>
+
+    async function init() {
+
+      var margin = {top: 10, right: 50, bottom: 50, left: 70},
+      width = 600 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom;
+
+      // append the svg object to the body of the page
+      var svg = d3.select("#dataVisualizationBody")
+        .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+
+      var data = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
+      console.log(data);
+      const [dataValues] = d3.values(data)
+      const keys = Object.keys(dataValues)
+      console.log(keys);
+      const monthField = keys[0];
+      const homeValueField = keys[20];
+      const homeValuePercentChange = keys[21];
+      var x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d['Month'] }))
+        .range([ 0, width ]);
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+      // Add Y axis
+   
+
+      var MonthlyUSHousePrice = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return +d['USA\n\n(SA)']; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .call(d3.axisLeft(MonthlyUSHousePrice));
+      svg.append('g')
+        .attr('transform', 'translate(-50,'+ height/2 + ')')
+        .append('text')
+        .attr('text-anchor', 'middle')
+        .attr('transform', 'rotate(-90)')
+        .text("Housing Price ($)");
+
+      var MonthlyPercentageDifference = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .attr('transform', "translate("+width+",0)")
+        .call(d3.axisRight(MonthlyPercentageDifference));
+      svg.append('g')
+        .attr('transform', 'translate(' + (width+40)+ ', ' + height/2 + ')')
+        .append('text')
+        .attr('text-anchor', 'middle')
+        .attr('transform', 'rotate(-90)')
+        .text("% change of Housing Price from last month");
+       //Add the line
+      svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .x(function(d) { return x(d['Month']) })
+          .y(function(d) { return MonthlyPercentageDifference(d['USA\n\n(SA) Monthly % change']) })
+          )
+    
+    }
+
+    init();
+</script>
 </html>
