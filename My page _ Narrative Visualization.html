@@ -17,6 +17,18 @@
         border-radius: 8px;			
         pointer-events: none;			
     }
+    g.comment  {
+      position: absolute;			
+      text-align: left;			
+      width: 200px;					
+      height: 100px;					
+      padding: 2px;				
+      font: 12px sans-serif;		
+      border: 0px;		
+      border-radius: 8px;			
+      pointer-events: none;			
+      word-wrap: break-word;
+    }
     
     </style>
   
@@ -26,120 +38,319 @@
 </svg>
 </body>
 <script>
-
-    async function init() {
-
-      var margin = {top: 80, right: 50, bottom: 50, left: 80},
+    const firstSceneText = `The graph represents the housing price index (HPI) and the % difference
+    of change of the HPI compared to the previous month. The HPI is an index value which represents
+    the current single family home's prices across the US.`;
+    const housing_price_color = 'red';
+    const housing_price_percent_change_color = 'blue';
+    var data;
+    var month;
+    var MonthlyPercentageDifference;
+    var MonthlyUSHousePrice;
+    var comment_background = 'lightsteelblue';
+    var button_background = 'lightgreen';
+    var margin = {top: 80, right: 50, bottom: 50, left: 80},
       width = 1000 - margin.left - margin.right,
       height = 800 - margin.top - margin.bottom;
+    var svg = d3.select("#dataVisualizationBody")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+    var date_format = d3.timeParse("%m/%d/%y");
+    function date_filter(arr,from,to) {
+      return arr.filter(function(v) { return v['Month'] !== null && date_format(v['Month']) >= date_format(from) 
+              && date_format(v['Month']) <= date_format(to) });
+    }
+    //find first occurrence of the max value
+    function maxIndex(data,key) {
+        return data.indexOf(Math.max.apply(Math, arr.map((i) => i[key])));
+    }
+    function wrap(text) {
+      text.each(function() {
+        var text = d3.select(this);
+        var words = text.text().split(/\s+/).reverse();
+        var lineHeight = 20;
+        var width = parseFloat(text.attr('width'));
+        var y = parseFloat(text.attr('y'));
+        var x = text.attr('x');
+        var anchor = text.attr('text-anchor');
+    
+        var tspan = text.text(null).append('tspan').attr('x', x).attr('y', y).attr('text-anchor', anchor);
+        var lineNumber = 0;
+        var line = [];
+        var word = words.pop();
 
-      // append the svg object to the body of the page
-      var svg = d3.select("#dataVisualizationBody")
-        .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-          .attr("transform",
-                "translate(" + margin.left + "," + margin.top + ")");
+        while (word) {
+            line.push(word);
+            tspan.text(line.join(' '));
+            if (tspan.node().getComputedTextLength() > width) {
+                lineNumber += 1;
+                line.pop();
+                tspan.text(line.join(' '));
+                line = [word];
+                tspan = text.append('tspan').attr('x', x).attr('y', y + lineNumber * lineHeight).attr('anchor', anchor).text(word);
+            }
+            word = words.pop();
+        }
+    });
+}
 
+    function drawAnnotations(from,to) {
 
-      var data = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
-      console.log(data);
-      const [dataValues] = d3.values(data)
-      const keys = Object.keys(dataValues)
-      console.log(keys);
-      const monthField = keys[0];
-      const homeValueField = keys[20];
-      const homeValuePercentChange = keys[21];
-      var date_format = d3.timeParse("%m/%d/%y");
-      const housing_price_color = 'red';
-      const housing_price_percent_change_color = 'blue';
+        var maxMonthlyPercentageWithDateFilterValue = d3.max(date_filter(data,from,to), d => d['USA\n\n(SA) Monthly % change']);
+         var maxMonthlyUSHousePriceAnnotationLine =  svg.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", housing_price_percent_change_color)
+            .attr("stroke-width", 1.5)
+            .attr("id", 'maxMonthlyUSHousePriceAnnotationLine')
+            .attr("d", d3.line()
+              .x(function(d) { return month(date_format(d['Month'])) })
+              .y(function(d) { return MonthlyPercentageDifference(maxMonthlyPercentageWithDateFilterValue) })
+              );
 
+                        
+          var maxMonthlyUSHousePriceAnnotationLineTotalLength = maxMonthlyUSHousePriceAnnotationLine.node().getTotalLength();
 
-      var x = d3.scaleTime()
-        .domain(d3.extent(data, function(d) { return date_format(d['Month']); }))
-        .range([ 0, width ]);
-      svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
+          maxMonthlyUSHousePriceAnnotationLine
+            .attr("stroke-dasharray", maxMonthlyUSHousePriceAnnotationLineTotalLength)
+            .attr("stroke-dashoffset", maxMonthlyUSHousePriceAnnotationLineTotalLength)
+            .transition()
+            .duration(2000)
+            .delay(1000)
+            .attr("stroke-dashoffset", 0)
+            .style("stroke-dasharray", "5 5")
+            .on('end', ()=> {
 
-      // Add Y axis
-   
+            });
 
-      var MonthlyUSHousePrice = d3.scaleLinear()
-        .domain([d3.min(data, function(d) { return +d['USA\n\n(SA)']; }), d3.max(data, function(d) { return +d['USA\n\n(SA)']; })])
-        .range([ height, 0 ]);
-      svg.append("g")
-        .style('stroke', housing_price_color)
-        .call(d3.axisLeft(MonthlyUSHousePrice));
-      svg.append('g')
-        .attr('transform', 'translate(-50,'+ height/2 + ')')
-        .append('text')
-        .attr('text-anchor', 'middle')
-        .attr('transform', 'rotate(-90)')
-        .style('fill', housing_price_color)
-        .text("US (SA) Housing Price Index");
+          var minFrom = from;
+          if (from  === data[0]['Month']) {
+            minFrom = data[1]['Month'];
+            console.log('Min from',minFrom);
+          }
+          var minMonthlyPercentageWithDateFilterValue = d3.min(date_filter(data,minFrom,to), d => d['USA\n\n(SA) Monthly % change']);
+         var minMonthlyUSHousePriceAnnotationLine =  svg.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", housing_price_percent_change_color)
+            .attr("stroke-width", 1.5)
+            .attr("id", 'maxMonthlyUSHousePriceAnnotationLine')
+            .attr("d", d3.line()
+              .x(function(d) { return month(date_format(d['Month'])) })
+              .y(function(d) { return MonthlyPercentageDifference(minMonthlyPercentageWithDateFilterValue) })
+              );
 
-      var MonthlyPercentageDifference = d3.scaleLinear()
-        .domain([d3.min(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; }), d3.max(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; })])
-        .range([ height, 0 ]);
-      svg.append("g")
-        .attr('transform', "translate("+width+",0)")
-        .style('stroke', housing_price_percent_change_color)
-        .call(d3.axisRight(MonthlyPercentageDifference));
+                        
+          var minMonthlyUSHousePriceAnnotationLineTotalLength = minMonthlyUSHousePriceAnnotationLine.node().getTotalLength();
+
+          minMonthlyUSHousePriceAnnotationLine
+            .attr("stroke-dasharray", minMonthlyUSHousePriceAnnotationLineTotalLength)
+            .attr("stroke-dashoffset", minMonthlyUSHousePriceAnnotationLineTotalLength)
+            .transition()
+            .duration(2000)
+            .delay(1000)
+            .attr("stroke-dashoffset", 0)
+            .style("stroke-dasharray", "5 5")
+            .on('end', ()=> {
+              
+            });
+        
+    }
+    function drawToolTips(from,to) {
+      var div = d3.select("body").append("div")	
+            .attr("class", "tooltip")	
+            			
+            .style("opacity", 0);
+      var circles = svg.selectAll("dot")	
+      .data(data.filter(function(v) { return v['Month'] !== null && date_format(v['Month']) >= date_format(from) 
+        && date_format(v['Month']) <= date_format(to) }))			
+      .enter().append("circle")		
+        .style('fill',housing_price_color)						
+        .attr("r", 5)		
+        .attr("cx", function(d) { return month(date_format(d['Month'])); })		 
+        .attr("cy", function(d) { return MonthlyUSHousePrice(d['USA\n\n(SA)']); })		
+        .on("mouseover", function(d) {		
+            div.transition()		
+                .duration(200)		
+                .style("opacity", .9);		
+            div.html(d['Month'] + "<br/>"  + d['USA\n\n(SA)'])	
+                .style("left", (d3.event.pageX-60) + "px")		
+                .style("top", (d3.event.pageY - 28) + "px");	
+            })					
+        .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0)
+                .on('end',() => div.html(''));	
+        });
+        circles.transition()
+          .duration(2000)
+          .delay(1000);
+    }
+    function drawComment(x,y,text,from,to,month,MonthlyUSHousePrice,MonthlyPercentageDifference) {
+      var comment = svg.append("g")	
+            .attr('id','commentBox')
+            .attr("class", "comment")	
+            .style("opacity", 0)
+            .attr('transform', 'translate('+x+','+ y+ ')');
+        var rect = comment.append('rect')
+            .attr('width', 300)
+            .attr('height', 120)
+            .attr("rx", 6)
+            .attr("ry", 6)
+            .style('fill', comment_background);
+        var textBox = comment.append('text')
+            .attr('x', 10)
+            .attr('y',15)
+            .attr('width', 280)
+            .attr('height', 120)
+            .attr('text-anchor', 'left')
+            .text(text);     
+        var nextButtonWidth = 80;
+        var nextButtonHeight = 30;
+        var nextButton = comment.append('g')
+            .attr('class','button')
+            .attr('id','commentNextButton')
+            .style('opacity',0)
+            .attr('transform','translate('+(rect.attr('width')-nextButtonWidth-10)+','+(rect.attr('height') - nextButtonHeight - 5)+')')
+            .attr('width',nextButtonWidth)
+            .attr('height',nextButtonHeight)
+            ;
+        var nextButtonRect = nextButton.append('rect')
+            .attr('width', nextButtonWidth)
+            .attr('height', nextButtonHeight)
+            .style("pointer-events","visible")
+            .attr("rx", 6)
+            .attr("ry", 6)
+            .style('fill', button_background);
+        var nextButtonText = nextButton.append('text')
+            .attr('transform','translate('+(nextButtonWidth/2-15)+','+(nextButtonHeight/2+5)+')')
+
+            .attr('text-anchor', 'center')
+            .text('Next')
+            ;
+
+        comment.transition().duration(2000).delay(1000).style("opacity", .9)
+          .on('end',() => {
+            nextButton.transition().duration(1000).delay(500).style('opacity',.9).on('end', () => {
+              console.log('Inside next button transition end');
+              nextButtonRect.on('click',() => {
+                  console.log('Inside click event');
+                  comment.transition().duration(2000).delay(100).style("opacity", 0).on('end',() => {
+                    comment.html('');
+                    drawAnnotations(from,to,month,MonthlyUSHousePrice,MonthlyPercentageDifference);
+                  });
+                }
+              );
+            });
+          });	
+
+        wrap(textBox);
+        nextButton
+    }
+    
+    function drawLine(from,to) {
+      
       svg.append('g')
         .attr('transform', 'translate(' + (width+40)+ ', ' + height/2 + ')')
         .append('text')
         .attr('text-anchor', 'middle')
         .attr('transform', 'rotate(-90)')
         .style('fill', housing_price_percent_change_color)
-        .text("% change of Housing Price Index from last month");
+        .text("% change of Housing Price Index (HPI) from last month");
        //Add the line
-      svg.append("path")
-        .datum(data.filter(function(v) { return v['Month'] !== null }))
+      var housing_price_percent_change_line =  svg.append("path")
+        .datum(data.filter(function(v) { return v['Month'] !== null && date_format(v['Month']) >= date_format(from) 
+            && date_format(v['Month']) <= date_format(to) }))
         .attr("fill", "none")
         .attr("stroke", housing_price_percent_change_color)
         .attr("stroke-width", 1.5)
         .attr("d", d3.line()
-          .x(function(d) { return x(date_format(d['Month'])) })
+          .x(function(d) { return month(date_format(d['Month'])) })
           .y(function(d) { return MonthlyPercentageDifference(d['USA\n\n(SA) Monthly % change']) })
           );
-      svg.append("path")
-        .datum(data.filter(function(v) { return v['Month'] !== null }))
+      var  housing_price_line =  svg.append("path")
+        .datum(data.filter(function(v) { return v['Month'] !== null && date_format(v['Month']) >= date_format(from) 
+            && date_format(v['Month']) <= date_format(to) }))
         .attr("fill", "none")
         .attr("stroke", housing_price_color)
         .attr("stroke-width", 1.5)
         .attr("d", d3.line()
-          .x(function(d) { return x(date_format(d['Month'])) })
+          .x(function(d) { return month(date_format(d['Month'])) })
           .y(function(d) { return MonthlyUSHousePrice(d['USA\n\n(SA)']) })
           );
+          
+          var housing_price_percent_change_line_totalLength = housing_price_percent_change_line.node().getTotalLength();
 
+          housing_price_percent_change_line
+            .attr("stroke-dasharray", housing_price_percent_change_line_totalLength)
+            .attr("stroke-dashoffset", housing_price_percent_change_line_totalLength)
+            .transition()
+            .duration(2000)
+            .delay(1000)
+            .attr("stroke-dashoffset", 0);
+            var housing_price_line_totalLength = housing_price_percent_change_line.node().getTotalLength();
 
-          var div = d3.select("body").append("div")	
-            .attr("class", "tooltip")	
-            			
-            .style("opacity", 0);
-          svg.selectAll("dot")	
-          .data(data)			
-          .enter().append("circle")		
-            .style('fill',housing_price_color)						
-            .attr("r", 5)		
-            .attr("cx", function(d) { return x(date_format(d['Month'])); })		 
-            .attr("cy", function(d) { return MonthlyUSHousePrice(d['USA\n\n(SA)']); })		
-            .on("mouseover", function(d) {		
-                div.transition()		
-                    .duration(200)		
-                    .style("opacity", .9);		
-                div.html(d['Month'] + "<br/>"  + d['USA\n\n(SA)'])	
-                    .style("left", (d3.event.pageX-60) + "px")		
-                    .style("top", (d3.event.pageY - 28) + "px");	
-                })					
-            .on("mouseout", function(d) {		
-                div.transition()		
-                    .duration(500)		
-                    .style("opacity", 0)
-                    .on('end',() => div.html(''));	
-            });
+            housing_price_line
+          .attr("stroke-dasharray", housing_price_line_totalLength)
+          .attr("stroke-dashoffset", housing_price_line_totalLength)
+          .transition()
+          .duration(2000)
+          .delay(1000)
+          .attr("stroke-dashoffset", 0).on('end',() => {
+            drawToolTips(from,to);
+            drawComment(width/2,100,firstSceneText,from,to);
+            //drawAnnotations(from,to,x,MonthlyUSHousePrice,MonthlyPercentageDifference);
+          });
+
+    }
+    async function init() {
+
+   
+
+      // append the svg object to the body of the page
+      
+
+      data = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
+      console.log(data);
+
+      month = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return date_format(d['Month']); }))
+        .range([ 0, width ]);
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(month));
+
+      // Add Y axis
+   
+
+      MonthlyUSHousePrice = d3.scaleLinear()
+        .domain([d3.min(data, function(d) { return +d['USA\n\n(SA)']; }), d3.max(data, function(d) { return +d['USA\n\n(SA)']; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .style('stroke', housing_price_color)
+        .call(d3.axisLeft(MonthlyUSHousePrice));
+
+      svg.append('g')
+        .attr('transform', 'translate(-50,'+ height/2 + ')')
+        .append('text')
+        .attr('text-anchor', 'middle')
+        .attr('transform', 'rotate(-90)')
+        .style('fill', housing_price_color)
+        .text("US (SA) Housing Price Index (HPI)");
+
+      MonthlyPercentageDifference = d3.scaleLinear()
+        .domain([d3.min(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; }), d3.max(data, function(d) { return +d['USA\n\n(SA) Monthly % change']; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .attr('transform', "translate("+width+",0)")
+        .style('stroke', housing_price_percent_change_color)
+        .call(d3.axisRight(MonthlyPercentageDifference));
+      drawLine('1/1/17','2/1/20');
     }
 
     init();
