@@ -43,6 +43,9 @@
     the current single family home's prices across the US.`;
     const housing_price_color = 'red';
     const housing_price_percent_change_color = 'blue';
+    const comment_transition_delay = 100;
+    const line_transition_time = 1000;
+    const line_transition_delay = 1000;
     var data;
     var month;
     var MonthlyPercentageDifference;
@@ -65,42 +68,57 @@
               && date_format(v['Month']) <= date_format(to) });
     }
     //find first occurrence of the max value
-    function maxIndex(data,key) {
-        return data.indexOf(Math.max.apply(Math, arr.map((i) => i[key])));
+    function maxIndex(arr,key) {
+        return arr.indexOf(Math.max.apply(Math, arr.map((i) => i[key])));
     }
-    function wrap(text) {
-      text.each(function() {
-        var text = d3.select(this);
-        var words = text.text().split(/\s+/).reverse();
-        var lineHeight = 20;
-        var width = parseFloat(text.attr('width'));
-        var y = parseFloat(text.attr('y'));
-        var x = text.attr('x');
-        var anchor = text.attr('text-anchor');
-    
-        var tspan = text.text(null).append('tspan').attr('x', x).attr('y', y).attr('text-anchor', anchor);
-        var lineNumber = 0;
-        var line = [];
-        var word = words.pop();
 
-        while (word) {
-            line.push(word);
-            tspan.text(line.join(' '));
-            if (tspan.node().getComputedTextLength() > width) {
-                lineNumber += 1;
-                line.pop();
-                tspan.text(line.join(' '));
-                line = [word];
-                tspan = text.append('tspan').attr('x', x).attr('y', y + lineNumber * lineHeight).attr('anchor', anchor).text(word);
-            }
-            word = words.pop();
-        }
-    });
-}
+    function dashArray(totalLength){
+      var pattern = "6, 6"
+      var dashLength =
+            pattern
+              .split(/[\s,]/)
+              .map(function (a) { return parseFloat(a) || 0 })
+              .reduce(function (a, b) { return a + b });
+      var numberOfDashes = Math.ceil( totalLength / dashLength );
+      var newDashes = new Array(numberOfDashes).join( pattern + " " );
+      return newDashes + " 0, " + totalLength;
+
+    }
+
+    function wrap(text) {
+        text.each(function() {
+          var text = d3.select(this);
+          var words = text.text().split(/\s+/).reverse();
+          var lineHeight = 20;
+          var width = parseFloat(text.attr('width'));
+          var y = parseFloat(text.attr('y'));
+          var x = text.attr('x');
+          var anchor = text.attr('text-anchor');
+      
+          var tspan = text.text(null).append('tspan').attr('x', x).attr('y', y).attr('text-anchor', anchor);
+          var lineNumber = 0;
+          var line = [];
+          var word = words.pop();
+
+          while (word) {
+              line.push(word);
+              tspan.text(line.join(' '));
+              if (tspan.node().getComputedTextLength() > width) {
+                  lineNumber += 1;
+                  line.pop();
+                  tspan.text(line.join(' '));
+                  line = [word];
+                  tspan = text.append('tspan').attr('x', x).attr('y', y + lineNumber * lineHeight).attr('anchor', anchor).text(word);
+              }
+              word = words.pop();
+          }
+      });
+    }
 
     function drawAnnotations(from,to) {
 
         var maxMonthlyPercentageWithDateFilterValue = d3.max(date_filter(data,from,to), d => d['USA\n\n(SA) Monthly % change']);
+        var maxMonthlyPercentageWithDateFilterEntry= date_filter(data,from,to).filter(d => d['USA\n\n(SA) Monthly % change'] >= maxMonthlyPercentageWithDateFilterValue);
          var maxMonthlyUSHousePriceAnnotationLine =  svg.append("path")
             .datum(data)
             .attr("fill", "none")
@@ -116,21 +134,24 @@
           var maxMonthlyUSHousePriceAnnotationLineTotalLength = maxMonthlyUSHousePriceAnnotationLine.node().getTotalLength();
 
           maxMonthlyUSHousePriceAnnotationLine
-            .attr("stroke-dasharray", maxMonthlyUSHousePriceAnnotationLineTotalLength)
+            .attr("stroke-dasharray", dashArray(maxMonthlyUSHousePriceAnnotationLineTotalLength))
             .attr("stroke-dashoffset", maxMonthlyUSHousePriceAnnotationLineTotalLength)
             .transition()
-            .duration(2000)
-            .delay(1000)
+            .duration(line_transition_time)
+            .delay(line_transition_time)
             .attr("stroke-dashoffset", 0)
-            .style("stroke-dasharray", "5 5")
             .on('end', ()=> {
-
+                drawRectangleWithText(month(date_format(maxMonthlyPercentageWithDateFilterEntry['Month'])),
+                 MonthlyPercentageDifference(maxMonthlyPercentageWithDateFilterEntry['USA\n\n(SA) Monthly % change']),
+                 maxMonthlyPercentageWithDateFilterEntry['USA\n\n(SA) Monthly % change'],
+                 100,
+                 80);
             });
+            
 
           var minFrom = from;
           if (from  === data[0]['Month']) {
             minFrom = data[1]['Month'];
-            console.log('Min from',minFrom);
           }
           var minMonthlyPercentageWithDateFilterValue = d3.min(date_filter(data,minFrom,to), d => d['USA\n\n(SA) Monthly % change']);
          var minMonthlyUSHousePriceAnnotationLine =  svg.append("path")
@@ -148,16 +169,17 @@
           var minMonthlyUSHousePriceAnnotationLineTotalLength = minMonthlyUSHousePriceAnnotationLine.node().getTotalLength();
 
           minMonthlyUSHousePriceAnnotationLine
-            .attr("stroke-dasharray", minMonthlyUSHousePriceAnnotationLineTotalLength)
+            .attr("stroke-dasharray", dashArray(minMonthlyUSHousePriceAnnotationLineTotalLength))
             .attr("stroke-dashoffset", minMonthlyUSHousePriceAnnotationLineTotalLength)
             .transition()
-            .duration(2000)
-            .delay(1000)
+            .duration(line_transition_time)
+            .delay(line_transition_delay)
             .attr("stroke-dashoffset", 0)
-            .style("stroke-dasharray", "5 5")
             .on('end', ()=> {
               
             });
+
+
         
     }
     function drawToolTips(from,to) {
@@ -192,24 +214,8 @@
           .delay(1000);
     }
     function drawComment(x,y,text,from,to,month,MonthlyUSHousePrice,MonthlyPercentageDifference) {
-      var comment = svg.append("g")	
-            .attr('id','commentBox')
-            .attr("class", "comment")	
-            .style("opacity", 0)
-            .attr('transform', 'translate('+x+','+ y+ ')');
-        var rect = comment.append('rect')
-            .attr('width', 300)
-            .attr('height', 120)
-            .attr("rx", 6)
-            .attr("ry", 6)
-            .style('fill', comment_background);
-        var textBox = comment.append('text')
-            .attr('x', 10)
-            .attr('y',15)
-            .attr('width', 280)
-            .attr('height', 120)
-            .attr('text-anchor', 'left')
-            .text(text);     
+      var comment = drawRectangleWithText(x,y,text,300,120);
+        var rect = comment.select('rect');
         var nextButtonWidth = 80;
         var nextButtonHeight = 30;
         var nextButton = comment.append('g')
@@ -234,13 +240,13 @@
             .text('Next')
             ;
 
-        comment.transition().duration(2000).delay(1000).style("opacity", .9)
+        comment.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9)
           .on('end',() => {
-            nextButton.transition().duration(1000).delay(500).style('opacity',.9).on('end', () => {
+            nextButton.transition().duration(1000).delay(comment_transition_delay).style('opacity',.9).on('end', () => {
               console.log('Inside next button transition end');
               nextButtonRect.on('click',() => {
                   console.log('Inside click event');
-                  comment.transition().duration(2000).delay(100).style("opacity", 0).on('end',() => {
+                  comment.transition().duration(1000).delay(100).style("opacity", 0).on('end',() => {
                     comment.html('');
                     drawAnnotations(from,to,month,MonthlyUSHousePrice,MonthlyPercentageDifference);
                   });
@@ -248,9 +254,30 @@
               );
             });
           });	
+        
+    }
 
+    function drawRectangleWithText(x,y,text,width,height) {
+      var comment = svg.append("g")	
+            .attr('id','commentBox')
+            .attr("class", "comment")	
+            .style("opacity", 0)
+            .attr('transform', 'translate('+x+','+ y+ ')');
+        var rect = comment.append('rect')
+            .attr('width', width)
+            .attr('height', height)
+            .attr("rx", 6)
+            .attr("ry", 6)
+            .style('fill', comment_background);
+        var textBox = comment.append('text')
+            .attr('x', 10)
+            .attr('y',15)
+            .attr('width', width - width/20)
+            .attr('height', height - height/20)
+            .attr('text-anchor', 'left')
+            .text(text); 
         wrap(textBox);
-        nextButton
+        return comment;
     }
     
     function drawLine(from,to) {
@@ -290,8 +317,8 @@
             .attr("stroke-dasharray", housing_price_percent_change_line_totalLength)
             .attr("stroke-dashoffset", housing_price_percent_change_line_totalLength)
             .transition()
-            .duration(2000)
-            .delay(1000)
+            .duration(line_transition_time)
+            .delay(line_transition_delay)
             .attr("stroke-dashoffset", 0);
             var housing_price_line_totalLength = housing_price_percent_change_line.node().getTotalLength();
 
@@ -299,8 +326,8 @@
           .attr("stroke-dasharray", housing_price_line_totalLength)
           .attr("stroke-dashoffset", housing_price_line_totalLength)
           .transition()
-          .duration(2000)
-          .delay(1000)
+          .duration(line_transition_time)
+          .delay(line_transition_delay)
           .attr("stroke-dashoffset", 0).on('end',() => {
             drawToolTips(from,to);
             drawComment(width/2,100,firstSceneText,from,to);
