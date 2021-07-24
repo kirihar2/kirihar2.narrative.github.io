@@ -47,6 +47,7 @@
     const housing_price_color = 'gray';
     const housing_price_percent_change_color = 'red';
     const comment_transition_delay = 100;
+    const next_button_transition_delay = comment_transition_delay+1000;
     const line_transition_time = 100;
     const line_transition_delay = 100;
     const scene_transition_delay = 100;
@@ -282,7 +283,7 @@
             ;
 
         comment.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',callback);
-        nextButton.transition().duration(2000).delay(comment_transition_delay*2).style('opacity',.9);
+        
         return comment;
         
     }
@@ -432,7 +433,8 @@
           var text = replace_strings(thirdSceneText,[minMonthlyText.text(),maxMonthlyText.text()]);
           var comment = drawComment(width/3,100,text,300,120,from,to, () => {
           var nextButton = comment.select('g');
-            nextButton.transition().on('end', () => {
+          nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
+          .on('end', () => {
               var nextButtonRect = nextButton.select('rect');
               nextButtonRect.on('click',() => {
                   comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
@@ -456,7 +458,8 @@
       var text = replace_strings(secondSceneText,[minMonthlyText.text(),maxMonthlyText.text()]);
       var comment = drawComment(width/2,100,text,300,120,from,to, () => {
       var nextButton = comment.select('g');
-        nextButton.transition().on('end', () => {
+      nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
+      .on('end', () => {
           var nextButtonRect = nextButton.select('rect');
           nextButtonRect.on('click',() => {
               comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
@@ -476,7 +479,8 @@
       var monthlyHPI = drawLine(from,to,'USA\n\n(SA)',() => {
         var comment = drawComment(width/2,100,firstSceneText,300,120,from,to, () => {
           var nextButton = comment.select('g');
-            nextButton.transition().on('end', () => {
+          nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
+          .on('end', () => {
               var nextButtonRect = nextButton.select('rect');
               nextButtonRect.on('click',() => {
                   comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
