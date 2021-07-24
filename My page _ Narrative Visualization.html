@@ -282,7 +282,7 @@
             ;
 
         comment.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',callback);
-        nextButton.transition().duration(1000).delay(comment_transition_delay).style('opacity',.9);
+        nextButton.transition().duration(2000).delay(comment_transition_delay*2).style('opacity',.9);
         return comment;
         
     }
@@ -376,12 +376,17 @@
       svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
         .style('opacity',0.9);
       svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
-          var comment = drawRectangleWithText(width/10,100,'Replay',55,25);
-          var button = comment.select('rect').style('fill',button_background).style("pointer-events","visible");
-          comment.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',() => {
-              button.on('click',() => {
-                // button.attr('fill',button.attr('fill').darker())
-                console.log('Inside button');
+          var replayButton = drawRectangleWithText(width/10,100,'Replay',55,25);
+          var replayButtonRect = replayButton.select('rect').style('fill',button_background).style("pointer-events","visible");
+          replayButton.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',() => {
+            replayButtonRect.on('click',() => {
+                svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
+                  .style('opacity',0).on('end',() => {
+                    svg.selectAll('path.hpi_line').remove();
+                    replayButton.remove();
+                    svg.transition().delay(2000).on('end',()=> {sceneOne();});
+                  });
+                
               });
           });
           
