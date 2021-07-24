@@ -135,7 +135,7 @@
       });
     }
 
-    function drawAnnotations(from,to,x,y,description,callback) {
+    function drawAnnotations(from,to) {
 
         var maxMonthlyPercentageWithDateFilterValue = d3.max(date_filter(data,from,to), d => d['USA\n\n(SA) Monthly % change']);
         var maxMonthlyPercentageWithDateFilterEntry= date_filter(data,from,to).filter(d => d['USA\n\n(SA) Monthly % change'] >= maxMonthlyPercentageWithDateFilterValue)[0];
@@ -150,41 +150,9 @@
               .y(function(d) { return MonthlyPercentageDifference(maxMonthlyPercentageWithDateFilterValue) })
               );                        
           var maxMonthlyUSHousePriceAnnotationLineTotalLength = maxMonthlyUSHousePriceAnnotationLine.node().getTotalLength();
-          var commentWidth= 200;
-          var commentHeight =100;
+ 
           var labelPaddingWidth = 55;
-
-          var commentBox = drawRectangleWithText(
-              x,
-              y,
-            '',
-            commentWidth,
-            commentHeight
-          );
-          var rect = commentBox.select('rect');
-          var nextButtonWidth = 80;
-          var nextButtonHeight = 30;
-          var nextButton = commentBox.append('g')
-              .attr('class','button')
-              .attr('id','commentNextButton')
-              .style('opacity',0)
-              .attr('transform','translate('+(rect.attr('width')-nextButtonWidth-10)+','+(rect.attr('height') - nextButtonHeight - 5)+')')
-              .attr('width',nextButtonWidth)
-              .attr('height',nextButtonHeight)
-              ;
-          var nextButtonRect = nextButton.append('rect')
-              .attr('width', nextButtonWidth)
-              .attr('height', nextButtonHeight)
-              .style("pointer-events","visible")
-              .attr("rx", 6)
-              .attr("ry", 6)
-              .style('fill', button_background);
-          var nextButtonText = nextButton.append('text')
-              .attr('transform','translate('+(nextButtonWidth/2-15)+','+(nextButtonHeight/2+5)+')')
-
-              .attr('text-anchor', 'center')
-              .text('Next')
-              ;
+         
           var maxMonthlyText = svg.append('text').attr('fill',housing_price_percent_change_color)
               .attr('id','maxMonthlyText')
               .style('opacity',0)
@@ -216,6 +184,7 @@
             minFrom = data[1]['Month'];
           }
           var minMonthlyPercentageWithDateFilterValue = d3.min(date_filter(data,minFrom,to), d => d['USA\n\n(SA) Monthly % change']);
+          console.log('Min value '+minMonthlyPercentageWithDateFilterValue);
           var minMonthlyPercentageWithDateFilterEntry= date_filter(data,minFrom,to).filter(d => d['USA\n\n(SA) Monthly % change'] <= minMonthlyPercentageWithDateFilterValue)[0];
 
           var minMonthlyUSHousePriceAnnotationLine =  svg.append("path")
@@ -252,14 +221,6 @@
               
               }
             );
-            commentBox.select('text').text(replace_strings(description,[minMonthlyPercentageWithDateFilterValue,maxMonthlyPercentageWithDateFilterValue]));
-
-            wrap(commentBox.select('text'));
-            
-
-            commentBox
-              .transition().duration(2000).delay(comment_transition_delay).style("opacity", .9)
-              .on('end',callback);
         
     }
     function drawToolTips(from,to) {
@@ -293,8 +254,8 @@
           .duration(2000)
           .delay(1000);
     }
-    function drawComment(x,y,text,from,to,callback) {
-      var comment = drawRectangleWithText(x,y,text,300,120);
+    function drawComment(x,y,text,width,height,from,to,callback) {
+      var comment = drawRectangleWithText(x,y,text,width,height);
         var rect = comment.select('rect');
         var nextButtonWidth = 80;
         var nextButtonHeight = 30;
@@ -388,16 +349,16 @@
           return line;
 
     }
-
-    function sceneThree(from,to) {
+    function sceneFour() {
       var commentBox = svg.select('#commentBox');
       var maxMonthlyText = svg.select('#maxMonthlyText');
       var minMonthlyText = svg.select('#minMonthlyText');
       var minMonthlyUSHousePriceAnnotationLine = svg.select('#minMonthlyUSHousePriceAnnotationLine');
       var maxMonthlyUSHousePriceAnnotationLine = svg.select('#maxMonthlyUSHousePriceAnnotationLine');
-
+      
       commentBox.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
-      commentBox.remove();
+        commentBox.remove();
+      });
       // Remove labels
       maxMonthlyText.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
         maxMonthlyText.remove();
@@ -412,45 +373,103 @@
       maxMonthlyUSHousePriceAnnotationLine.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
         maxMonthlyUSHousePriceAnnotationLine.remove();
       });
-      
       svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
-        .style('opacity',0.2).on('end',() => {
-          from = to;
-          to = data[data.length-1]['Month'];
-          var monthlyPercentLine = drawLine(from,to,'USA\n\n(SA) Monthly % change');
-          var monthlyHPI = drawLine(from,to,'USA\n\n(SA)',() => {
-            drawAnnotations(from,to,width/2,height/6,thirdSceneText, () => {
-              console.log('Inside third scene');
-            });
-            
+        .style('opacity',0.9);
+      svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
+          var comment = drawRectangleWithText(width/10,100,'Replay',55,25);
+          var button = comment.select('rect').style('fill',button_background).style("pointer-events","visible");
+          comment.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',() => {
+              button.on('click',() => {
+                // button.attr('fill',button.attr('fill').darker())
+                console.log('Inside button');
+              });
           });
-              
+          
+            
         });
-                              
-    });
 
+    }
+    function sceneThree(from,to) {
+      var commentBox = svg.select('#commentBox');
+      var maxMonthlyText = svg.select('#maxMonthlyText');
+      var minMonthlyText = svg.select('#minMonthlyText');
+      var minMonthlyUSHousePriceAnnotationLine = svg.select('#minMonthlyUSHousePriceAnnotationLine');
+      var maxMonthlyUSHousePriceAnnotationLine = svg.select('#maxMonthlyUSHousePriceAnnotationLine');
+      
+      commentBox.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
+        commentBox.remove();
+      });
+      // Remove labels
+      maxMonthlyText.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
+        maxMonthlyText.remove();
+      });
+      minMonthlyText.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
+        minMonthlyText.remove();
+      });
+
+      minMonthlyUSHousePriceAnnotationLine.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
+        minMonthlyUSHousePriceAnnotationLine.remove();
+      });
+      maxMonthlyUSHousePriceAnnotationLine.transition().duration(scene_transition_time).delay(scene_transition_delay).style('opacity',0).on('end', () => {
+        maxMonthlyUSHousePriceAnnotationLine.remove();
+      });
+      from = to;
+      to = data[data.length-1]['Month'];
+      svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
+        .style('opacity',0.2);
+      console.log('Update from to '+from + ' '+to);
+      svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
+        var monthlyPercentLine = drawLine(from,to,'USA\n\n(SA) Monthly % change');
+        var monthlyHPI = drawLine(from,to,'USA\n\n(SA)',() => {
+          drawAnnotations(from,to);
+          var maxMonthlyText = svg.select('#maxMonthlyText');
+          var minMonthlyText = svg.select('#minMonthlyText');
+          var text = replace_strings(thirdSceneText,[minMonthlyText.text(),maxMonthlyText.text()]);
+          var comment = drawComment(width/3,100,text,300,120,from,to, () => {
+          var nextButton = comment.select('g');
+            nextButton.transition().on('end', () => {
+              var nextButtonRect = nextButton.select('rect');
+              nextButtonRect.on('click',() => {
+                  comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
+                    comment.remove();
+                    sceneFour();
+                  });
+                }
+              );
+            });
+          });
+        });
+      });
     }
 
     function sceneTwo(from,to) {
 
-      drawAnnotations(from,to,width/2,height/4,secondSceneText,() => {
-          var nextButton = svg.select('#commentNextButton');
-          var commentBox = svg.select('#commentBox');
-          var maxMonthlyText = svg.select('#maxMonthlyText');
-          var minMonthlyText = svg.select('#minMonthlyText');
+      drawAnnotations(from,to);
 
-          nextButton.transition().duration(1000).delay(comment_transition_delay+line_transition_delay+line_transition_time).style('opacity',.9).on('end', () => {
-            var nextButtonRect = nextButton.select('rect');
-            nextButtonRect.on('click',sceneThree);
-          });
+      var maxMonthlyText = svg.select('#maxMonthlyText');
+      var minMonthlyText = svg.select('#minMonthlyText');
+      var text = replace_strings(secondSceneText,[minMonthlyText.text(),maxMonthlyText.text()]);
+      var comment = drawComment(width/2,100,text,300,120,from,to, () => {
+      var nextButton = comment.select('g');
+        nextButton.transition().on('end', () => {
+          var nextButtonRect = nextButton.select('rect');
+          nextButtonRect.on('click',() => {
+              comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
+                comment.remove();
+                sceneThree(from,to);
+              });
+            }
+          );
         });
+      });
+      
     }
     function sceneOne() {
       var from = '1/1/17';
       var to = '2/1/20';
       var monthlyPercentLine = drawLine(from,to,'USA\n\n(SA) Monthly % change');
       var monthlyHPI = drawLine(from,to,'USA\n\n(SA)',() => {
-        var comment = drawComment(width/2,100,firstSceneText,from,to, () => {
+        var comment = drawComment(width/2,100,firstSceneText,300,120,from,to, () => {
           var nextButton = comment.select('g');
             nextButton.transition().on('end', () => {
               var nextButtonRect = nextButton.select('rect');
