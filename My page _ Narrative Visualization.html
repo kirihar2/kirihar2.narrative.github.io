@@ -170,11 +170,6 @@
             .delay(line_transition_time)
             .attr("stroke-dashoffset", 0)
             .on('end', ()=> {
-                // console.log('drawing comments');
-                // console.log(maxMonthlyPercentageWithDateFilterEntry);
-                // console.log(month(date_format(maxMonthlyPercentageWithDateFilterEntry['Month'])));
-                // console.log(maxMonthlyPercentageWithDateFilterEntry['USA\n\n(SA) Monthly % change']);
-                // console.log(MonthlyPercentageDifference(maxMonthlyPercentageWithDateFilterEntry['USA\n\n(SA) Monthly % change']));
                 maxMonthlyText.transition().duration(2000).delay(comment_transition_delay).style('opacity',1);
                 
             });
@@ -185,7 +180,6 @@
             minFrom = data[1]['Month'];
           }
           var minMonthlyPercentageWithDateFilterValue = d3.min(date_filter(data,minFrom,to), d => d['USA\n\n(SA) Monthly % change']);
-          console.log('Min value '+minMonthlyPercentageWithDateFilterValue);
           var minMonthlyPercentageWithDateFilterEntry= date_filter(data,minFrom,to).filter(d => d['USA\n\n(SA) Monthly % change'] <= minMonthlyPercentageWithDateFilterValue)[0];
 
           var minMonthlyUSHousePriceAnnotationLine =  svg.append("path")
@@ -423,7 +417,6 @@
       to = data[data.length-1]['Month'];
       svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
         .style('opacity',0.2);
-      console.log('Update from to '+from + ' '+to);
       svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
         var monthlyPercentLine = drawLine(from,to,'USA\n\n(SA) Monthly % change');
         var monthlyHPI = drawLine(from,to,'USA\n\n(SA)',() => {
@@ -492,7 +485,6 @@
               );
             });
         });
-        console.log('After comments');
       });
   
     }
@@ -505,7 +497,6 @@
       
 
       data = await d3.csv('https://raw.githubusercontent.com/kirihar2/kirihar2.narrative.github.io/master/HPI_PO_monthly_hist%20with%20percent%20Monthly%20change.csv');
-      console.log(data);
 
       month = d3.scaleTime()
         .domain(d3.extent(data, function(d) { return date_format(d['Month']); }))
