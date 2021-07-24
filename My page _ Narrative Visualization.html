@@ -61,7 +61,7 @@
     var MonthlyUSHousePrice;
     var comment_background = 'lightsteelblue';
     var button_background = 'lightgreen';
-    var margin = {top: 120, right: 100, bottom: 50, left: 80},
+    var margin = {top: 120, right: 100, bottom: 150, left: 150},
       width = 1000 - margin.left - margin.right,
       height = 800 - margin.top - margin.bottom;
     var svg = d3.select("#dataVisualizationBody")
@@ -69,6 +69,9 @@
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
+      .attr('id','sceneGroup')
+      .style('pointer-events','all')
+        .style('cursor','pointer')
         .attr("transform",
               "translate(" + margin.left + "," + margin.top + ")");
     var date_format = d3.timeParse("%m/%d/%y");
@@ -317,8 +320,109 @@
           return line;
 
     }
+    function drawToolTip(x,y) {
+      var closestMonthFunction = d3.bisector((d) => {return date_format(d[month_data_key]);}).left;
+      var closestMonthIndex = closestMonthFunction(data,month.invert(x));
+      var closestMonthEntry = data[closestMonthIndex];
+      //draw vertical line for month
+      //console.log(closestMonthEntry,month(date_format(closestMonthEntry[month_data_key])));
+      var verticalLine = d3.select('#verticalLine')
+        .attr("x1", month(date_format(closestMonthEntry[month_data_key])))
+        .attr("y1", 0)
+        .attr("x2", month(date_format(closestMonthEntry[month_data_key])))
+        .attr("y2", height)
+        .style("stroke-width", 1.5)
+        .style('opacity',0.7)
+        .style("stroke", housing_price_percent_change_color)
+        .style("fill", "none");
+      // add circles on each line indicating the values
+      var radius = 5;
+      var hpiAnnotatedCircle = d3.select('#hpiAnnotatedCircles')
+          .attr('cx',month(date_format(closestMonthEntry[month_data_key])))
+          .attr('cy',MonthlyUSHousePrice(closestMonthEntry[housing_price_data_key]))
+          .attr('r',radius)
+          .attr('fill', housing_price_color)
+          .style('opacity',0.7);
+        var hpiPercentAnnotatedCircle = d3.select('#hpiPercentAnnotatedCircle')
+        .attr('cx',month(date_format(closestMonthEntry[month_data_key])))
+          .attr('cy',MonthlyPercentageDifference(closestMonthEntry[housing_price_percent_data_key]))
+          .attr('r',radius)
+          .attr('fill', housing_price_percent_change_color)
+          .style('opacity',0.7); 
+
+      //calculate highest point of limited entries within the width of the comment box
+      var commentWidth = 120;
+      var commentHeight = 80;
+      var commentMargin = 10;
+      /*
+        can find the highest point to the left by finding the Month index to search from and to
+          * to - current cursor point
+          * from - index of data where x = current cursor - commentWidth -1
+      */
+      var floorValueOfCommentIndex = closestMonthFunction(data,month.invert(x - commentWidth - commentMargin));
+      var minVerticalPixelValue = d3.min(data.slice(Math.max(0,floorValueOfCommentIndex),Math.min(data.length-1,closestMonthIndex)),(d) =>
+          {
+            return Math.min(MonthlyPercentageDifference(d[housing_price_percent_data_key]),
+              MonthlyUSHousePrice(d[housing_price_data_key]));
+          } 
+        );
+      if (floorValueOfCommentIndex -1 <=0) {
+        minVerticalPixelValue = height+commentHeight+commentMargin;
+      }
+      
+
+      console.log(y,height,minVerticalPixelValue);
+      var commentBox = d3.select('#lineCommentBox')
+          .style('opacity',0.8)
+          .select('rect')
+          .attr('transform','translate('+(month(date_format(closestMonthEntry[month_data_key])) - commentWidth - commentMargin)+','+(minVerticalPixelValue - commentHeight- commentMargin)+')')
+          .attr('width',commentWidth)
+          .attr('height', commentHeight)
+        ;
+          
+
+    }
+
     function enableTooltips() {
-      svg.on('mouseover',(x,y) => {});
+      var rect = d3.select('#sceneGroup').append('rect')
+      .attr('class', 'click-capture')
+      .style('visibility', 'hidden')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', width)
+      .attr('height', height);
+      var verticalLine =  svg.append("line")
+        .attr('id','verticalLine')
+        .attr("x1",0)
+        .attr("y1", 0)
+        .attr("x2", 0)
+        .attr("y2", 0)
+        .style("stroke-width", 1.5)
+        .style('opacity',0)
+        .style("stroke", housing_price_percent_change_color)
+        .style("fill", "none");
+      var hpiAnnotatedCircle = svg.append('circle')
+        .attr('id','hpiAnnotatedCircles')
+        .attr('cx',0)
+        .attr('cy',0)
+        .attr('r',5)
+        .attr('fill', housing_price_color)
+        .style('opacity',0);
+      var hpiPercentAnnotatedCircle = svg.append('circle')
+        .attr('id','hpiPercentAnnotatedCircle')
+        .attr('cx',0)
+        .attr('cy',0)
+        .attr('r',5)
+        .attr('fill', housing_price_percent_change_color)
+        .style('opacity',0);
+      var lineComment = drawRectangleWithText(0,0,'',0,0);
+      lineComment.style('opacity',0).attr('id','lineCommentBox');
+      rect.on('mousemove',() => {
+        var position = d3.mouse(rect.node());
+        var x = position[0];
+        var y = position[1];
+        drawToolTip(x,y);
+      });
       
     }
 
