@@ -33,7 +33,7 @@
     </style>
   
   <body id= 'dataVisualizationBody'>
-     <style> rect {fill: lightblue; stroke: black; }</style>
+     <style> rect {fill: rgb(73, 73, 73); stroke: black; }</style>
      
 </svg>
 </body>
@@ -47,7 +47,7 @@
     const housing_price_percent_data_key = 'USA\n\n(SA) Monthly % change';
     const housing_price_data_key = 'USA\n\n(SA)';
     const month_data_key = 'Month';
-    const housing_price_color = 'gray';
+    const housing_price_color = 'rgb(73, 73, 73)';
     const housing_price_percent_change_color = 'red';
     const comment_transition_delay = 100;
     const next_button_transition_delay = comment_transition_delay*2;
@@ -325,7 +325,7 @@
       var closestMonthIndex = closestMonthFunction(data,month.invert(x));
       var closestMonthEntry = data[closestMonthIndex];
       //draw vertical line for month
-      //console.log(closestMonthEntry,month(date_format(closestMonthEntry[month_data_key])));
+      // console.log(closestMonthEntry,month(date_format(closestMonthEntry[month_data_key])));
       var verticalLine = d3.select('#verticalLine')
         .attr("x1", month(date_format(closestMonthEntry[month_data_key])))
         .attr("y1", 0)
@@ -351,7 +351,7 @@
           .style('opacity',0.7); 
 
       //calculate highest point of limited entries within the width of the comment box
-      var commentWidth = 120;
+      var commentWidth = 130;
       var commentHeight = 80;
       var commentMargin = 10;
       /*
@@ -367,24 +367,46 @@
           } 
         );
       if (floorValueOfCommentIndex -1 <=0) {
-        minVerticalPixelValue = height+commentHeight+commentMargin;
+        minVerticalPixelValue = height+commentHeight+commentMargin+20;
       }
-      
-
-      console.log(y,height,minVerticalPixelValue);
-      var commentBox = d3.select('#lineCommentBox')
+      var commentX = (month(date_format(closestMonthEntry[month_data_key])) - commentWidth - commentMargin);
+      var commentY = (minVerticalPixelValue - commentHeight- commentMargin)
+      var lineCommentRect = d3.select('#lineCommentBox')
           .style('opacity',0.8)
           .select('rect')
-          .attr('transform','translate('+(month(date_format(closestMonthEntry[month_data_key])) - commentWidth - commentMargin)+','+(minVerticalPixelValue - commentHeight- commentMargin)+')')
+          .attr('transform','translate('+commentX+','+commentY+')')
           .attr('width',commentWidth)
           .attr('height', commentHeight)
         ;
-          
+      var anchor = 'left';
+      var lineCommentText = d3.select('#lineCommentBox')
+          .select('text')
+          .attr('transform','translate('+commentX+','+commentY+')')
+          .attr('width',commentWidth)
+          .attr('height', commentHeight)
+          .attr('text-anchor', anchor)
+          .text(null)
+
+      lineCommentText
+        .append('tspan').attr('x', 0).attr('y', 20)
+        .style('font-size','13px').attr('text-anchor', anchor)
+        .text('Month: '+closestMonthEntry[month_data_key]);
+      lineCommentText
+        .append('tspan').attr('x', 0).attr('y', 40)
+        .style('font-size','13px').attr('text-anchor', anchor)
+        .attr('fill',housing_price_color)
+        .text('HPI: '+closestMonthEntry[housing_price_data_key]);
+      lineCommentText
+        .append('tspan').attr('x', 0).attr('y', 60)
+        .style('font-size','13px').attr('text-anchor', anchor)
+        .attr('fill',housing_price_percent_change_color)
+        .text('HPI % Change: '+closestMonthEntry[housing_price_percent_data_key]);
 
     }
 
     function enableTooltips() {
       var rect = d3.select('#sceneGroup').append('rect')
+      .attr('id','invisibleRect')
       .attr('class', 'click-capture')
       .style('visibility', 'hidden')
       .attr('x', 0)
@@ -417,6 +439,7 @@
         .style('opacity',0);
       var lineComment = drawRectangleWithText(0,0,'',0,0);
       lineComment.style('opacity',0).attr('id','lineCommentBox');
+      lineComment.select('text').attr('x',0).attr('y',0);
       rect.on('mousemove',() => {
         var position = d3.mouse(rect.node());
         var x = position[0];
@@ -453,11 +476,27 @@
       svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
         .style('opacity',0.9);
       svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
-          var replayButton = drawRectangleWithText(width/10,100,'Replay',55,25);
+          var replayButton = drawRectangleWithText(0,-60,'Replay',55,25);
           var replayButtonRect = replayButton.select('rect').style('fill',button_background).style("pointer-events","visible");
           enableTooltips();
           replayButton.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',() => {
             replayButtonRect.on('click',() => {
+                svg.selectAll('circle').transition().duration(scene_transition_time).delay(scene_transition_delay)
+                  .style('opacity',0).on('end',() => {
+                    svg.selectAll('circle').remove();
+                });
+                d3.selectAll('#verticalLine').transition().duration(scene_transition_time).delay(scene_transition_delay)
+                  .style('opacity',0).on('end',() => {
+                    d3.selectAll('#verticalLine').remove();
+                });
+                d3.selectAll('#invisibleRect').on('mousemove',() => { console.log('inside invisible rect');}).transition().duration(scene_transition_time).delay(scene_transition_delay)
+                  .style('opacity',0).on('end',() => {
+                    d3.selectAll('#invisibleRect').remove();
+                });
+                svg.selectAll('line').transition().duration(scene_transition_time).delay(scene_transition_delay)
+                  .style('opacity',0).on('end',() => {
+                    svg.selectAll('g.comment').remove();
+                });
                 svg.selectAll('path.hpi_line').transition().duration(scene_transition_time).delay(scene_transition_delay)
                   .style('opacity',0).on('end',() => {
                     svg.selectAll('path.hpi_line').remove();
@@ -550,7 +589,7 @@
       
     }
     function sceneOne() {
-      var from = '1/1/17';
+      var from = data[0][month_data_key];
       var to = '2/1/20';
       var monthlyPercentLine = drawLine(from,to,housing_price_percent_data_key);
       var monthlyHPI = drawLine(from,to,housing_price_data_key,() => {
