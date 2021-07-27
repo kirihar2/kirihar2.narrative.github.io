@@ -117,6 +117,10 @@
     var slider_label;
     var slider;
     var current_slider_date;
+    var state = 0;
+    var max_state = 4; 
+    var progress_bar;
+    const segmentWidth = 50;
     var slider_title_width = 60;
     var slider_title_margin = 20;
     var slider_enabled = false;
@@ -589,8 +593,18 @@
       });
       
     }
-
+    function transition_progress(){
+      if(!d3.active(progress_bar)) {
+        progress_bar.transition()
+            .duration(scene_transition_time)
+            .attr('width', function(){
+              return (state) * segmentWidth;
+            });
+        }
+    }
     function sceneFour() {
+      state = 4; 
+      transition_progress();
       var commentBox = svg.select('#commentBox');
       var maxMonthlyText = svg.select('#maxMonthlyText');
       
@@ -627,6 +641,9 @@
 
     }
     function sceneThree(from,to) {
+
+      state = 3;
+      transition_progress();
       var commentBox = svg.select('#commentBox');
       var maxMonthlyText = svg.select('#maxMonthlyText');
       var maxMonthlyUSHousePriceAnnotationLine = svg.select('#maxMonthlyUSHousePriceAnnotationLine');
@@ -667,7 +684,8 @@
     function sceneTwo(from,to) {
 
       drawAnnotations(from,from,to);
-
+      state = 2;
+      transition_progress();
       var maxMonthlyText = svg.select('#maxMonthlyText');
       
       var text = replace_strings(secondSceneText,[maxMonthlyText.text()]);
@@ -711,7 +729,8 @@
       var from = start_from_date;
       
       var to = '2/1/20';
-      
+      state = 1;
+      transition_progress();
       var monthlyPercentLine = drawLine(from,to,housing_price_percent_data_key);
       var monthlyHPI = drawLine(from,to,housing_price_data_key,() => {
         var comment = drawComment(width/2,100,firstSceneText,300,120,from,to, () => {
@@ -760,6 +779,7 @@
     }
 
 
+
     async function init() {
 
    
@@ -805,13 +825,42 @@
         .style('fill', housing_price_color)
         .text("US (SA) Housing Price Index (HPI)");
       svg.append('g')
-        
         .attr('transform', 'translate('+width/2+','+ -70+ ')')
         .append('text')
         .style('font-size','25px')
         .attr('text-anchor', 'middle')
         .style('fill', housing_price_color)
         .text("Monthly US Seasonally Adjusted Housing Price Index (HPI)");
+      svg.append('g')
+        .attr('transform', 'translate('+ -85 +','+ -20 + ')')
+        .append('text')
+        .style('font-size','12px')
+        .attr('text-anchor', 'middle')
+        .style('fill', 'black')
+        .text("Progress");
+        
+        svg.append('rect')
+          .attr('rx', 10)
+          .attr('ry', 10)
+          .style('fill', 'lightgray')
+          .attr('height', 15)
+          .attr('width', function(){
+            return segmentWidth * max_state;
+          })
+          .attr('x', 0)
+          .attr('y',80)
+          .attr('transform', 'rotate(90)');
+      progress_bar = svg.append('rect')
+					.style('fill','green')
+					.attr('height', 15)
+					.attr('width', 0)
+					.attr('rx', 10)
+					.attr('ry', 10)
+          .attr('x', 0)
+          .attr('y',80)
+          .attr('transform', 'rotate(90)')
+					;
+
       drawSlider();
       sceneOne();
     }
