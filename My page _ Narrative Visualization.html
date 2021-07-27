@@ -28,6 +28,7 @@
       border-radius: 8px;			
       pointer-events: none;			
       word-wrap: break-word;
+      color: rgb(3, 145, 3);
     }
     
     </style>
@@ -61,6 +62,8 @@
     var MonthlyUSHousePrice;
     var comment_background = 'lightsteelblue';
     var button_background = 'lightgreen';
+    var button_highlight = 'rgb(6, 255, 6)';
+    var button_pressed = 'rgb(3, 145, 3)';
     var margin = {top: 120, right: 100, bottom: 150, left: 150},
       width = 1000 - margin.left - margin.right,
       height = 800 - margin.top - margin.bottom;
@@ -403,6 +406,18 @@
         .text('HPI % Change: '+closestMonthEntry[housing_price_percent_data_key]);
 
     }
+    function animateButton(button) {
+        button.on('mouseover', () => {
+          button.transition().duration(100).style('fill',button_highlight);
+        }).on('mouseout', () => {
+          button.transition().duration(100).style('fill',button_background);
+        } ).on('mousedown', () => {
+          button.transition().duration(50).style('fill',button_pressed);
+        }).on('mouseup',()=> {
+          button.transition().duration(50).style('fill',button_background);
+        });
+
+    }
 
     function enableTooltips() {
       var rect = d3.select('#sceneGroup').append('rect')
@@ -478,6 +493,7 @@
       svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
           var replayButton = drawRectangleWithText(0,-60,'Replay',55,25);
           var replayButtonRect = replayButton.select('rect').style('fill',button_background).style("pointer-events","visible");
+          animateButton(replayButtonRect);
           enableTooltips();
           replayButton.transition().duration(2000).delay(comment_transition_delay).style("opacity", .9).on('end',() => {
             replayButtonRect.on('click',() => {
@@ -538,9 +554,10 @@
           nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
           .on('end', () => {
               var nextButtonRect = nextButton.select('rect');
+              animateButton(nextButtonRect);
               nextButtonRect.on('click',() => {
                 if(!d3.active(nextButtonRect)) {
-
+                  
                   comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
                     comment.remove();
                     sceneFour();
@@ -566,8 +583,10 @@
       nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
       .on('end', () => {
           var nextButtonRect = nextButton.select('rect');
+          animateButton(nextButtonRect);
             nextButtonRect.on('click',() => {
               if(!d3.active(nextButtonRect)) {
+                nextButtonRect.attr('')
                 comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
                   comment.remove();
                   var commentBox = svg.select('#commentBox');
@@ -613,7 +632,7 @@
           nextButton.transition().duration(2000).delay(next_button_transition_delay).style('opacity',0.9)
           .on('end', () => {
               var nextButtonRect = nextButton.select('rect');
-              
+              animateButton(nextButtonRect);
               nextButtonRect.on('click',() => {
                 if(!d3.active(nextButtonRect)) {
                     comment.transition().duration(scene_transition_time).delay(scene_transition_delay).style("opacity", 0).on('end',() => {
