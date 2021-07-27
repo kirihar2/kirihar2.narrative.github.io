@@ -589,19 +589,7 @@
       });
       
     }
-    function animateSliderCircle() {
-      slider_handle.on('mouseover', () => {
-          console.log('inside mouse over');
-          slider_handle.transition().duration(100).attr("class", "handle-mouseover")
-        }).on('mouseout', () => {
-          slider_handle.transition().duration(100).attr("class", "handle");
-        } ).on('mousedown', () => {
-          slider_handle.transition().duration(50).attr("class", "handle-mousedown");
-        }).on('mouseup',()=> {
-          slider_handle.transition().duration(50).attr("class", "handle");
-        });
-    
-    }
+
     function sceneFour() {
       var commentBox = svg.select('#commentBox');
       var maxMonthlyText = svg.select('#maxMonthlyText');
@@ -634,7 +622,6 @@
           enableTooltips();
           var comment = drawRectangleWithText(slider_handle.attr('cx'), height+100,'Move the handle to see change the start date of the graph' ,200, 40).style('opacity',0.9);
           comment.attr('id','sliderDescriptionComment');
-          animateSliderCircle();
             
         });
 
