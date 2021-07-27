@@ -101,13 +101,13 @@
     const housing_price_color = 'rgb(73, 73, 73)';
     const housing_price_percent_change_color = 'red';
 
-    const comment_transition_duration = 100;
-    const comment_transition_delay = 100;
+    const comment_transition_duration = 1000;
+    const comment_transition_delay = 1000;
     const next_button_transition_delay = comment_transition_delay;
-    const line_transition_time = 100;
-    const line_transition_delay = 100;
-    const scene_transition_delay = 100;
-    const scene_transition_time = 100;
+    const line_transition_time = 1000;
+    const line_transition_delay = 1000;
+    const scene_transition_delay = 1000;
+    const scene_transition_time = 1000;
     const start_from_date = '1/1/17';
     var data;
     var month;
@@ -219,7 +219,7 @@
         .attr("class", "slider");
 
         slider_date_range = d3.scaleTime()
-          .domain([date_format(data[0][month_data_key]), date_format(data[data.length-1][month_data_key])])
+          .domain([date_format(data[0][month_data_key]), date_format(data[data.length-10][month_data_key])])
           .range([0, (width - slider_title_width - slider_title_margin - 130)])
           .clamp(true);
       slider.append("line")
