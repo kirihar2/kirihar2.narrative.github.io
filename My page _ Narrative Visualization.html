@@ -838,7 +838,13 @@
         .attr('text-anchor', 'middle')
         .style('fill', 'black')
         .text("Progress");
-        
+        svg.append('g')
+        .attr('transform', 'translate('+  0 +','+ (height+120) + ')')
+        .append('text')
+        .style('font-size','12px')
+        .attr('text-anchor', 'left')
+        .style('fill', 'black')
+        .text("Datasource: https://www.fhfa.gov/DataTools/Downloads/Pages/House-Price-Index.aspx");
         svg.append('rect')
           .attr('rx', 10)
           .attr('ry', 10)
