@@ -634,7 +634,7 @@
       svg.transition().duration(scene_transition_time).delay(scene_transition_delay).on('end',() => {
           slider_enabled = true;
           enableTooltips();
-          var comment = drawRectangleWithText(slider_handle.attr('cx'), height+100,'Move the handle to see change the start date of the graph' ,200, 40).style('opacity',0.9);
+          var comment = drawRectangleWithText(slider_handle.attr('cx'), height+100,'Move the slider to see change the start date of the graph' ,200, 40).style('opacity',0.9);
           comment.attr('id','sliderDescriptionComment');
             
         });
